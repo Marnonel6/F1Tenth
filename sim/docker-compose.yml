@@ -1,0 +1,40 @@
+# RoboRacer simulator container (ROS 2 Jazzy, f1tenth_gym_ros dev-jazzy).
+# Everything ROS-related runs in here; the host stays on its own ROS 2 Humble.
+#
+#   docker compose -f sim/docker-compose.yml up -d --build   # first time
+#   scripts/launch_sim.sh                                      # bridge + map
+#   scripts/rviz.sh                                            # RViz over X11
+#
+# Host networking is deliberate: Foxglove (ws://localhost:8765) and any host
+# tools see the container's ROS graph without port juggling.
+services:
+  sim:
+    image: roboracer_sim:jazzy
+    container_name: roboracer_sim
+    build:
+      context: ./f1tenth_gym_ros
+      args:
+        ROS_DISTRO: jazzy
+        GYM_REF: dev-jax
+    network_mode: host
+    ipc: host
+    environment:
+      - DISPLAY=${DISPLAY:-:1}
+      - QT_X11_NO_MITSHM=1
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      # simulator source (edit sim.yaml on the host, rebuild in the container)
+      - ./f1tenth_gym_ros:/sim_ws/src/f1tenth_gym_ros
+      # lab workspace (edit on host, colcon build in container)
+      - ../labs/ws:/labs_ws
+      # X11 socket so rviz2 can open a window on the host display
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    # GPU via CDI (Container Device Interface). No nvidia runtime registration
+    # needed: `docker info` already lists nvidia.com/gpu=all. Gives RViz hardware
+    # GL and lets you `pip install -e /sim_ws/f1tenth_gym[cuda]` for GPU JAX later.
+    # If the container ever fails to start with a CDI error, comment out `devices:`
+    # and add `- LIBGL_ALWAYS_SOFTWARE=1` to environment.
+    devices:
+      - nvidia.com/gpu=all
+    stdin_open: true
+    tty: true

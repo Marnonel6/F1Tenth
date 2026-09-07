@@ -1,0 +1,4 @@
+[submodule "sim/f1tenth_gym_ros"]
+	path = sim/f1tenth_gym_ros
+	url = https://github.com/f1tenth/f1tenth_gym_ros.git
+	branch = dev-jazzy

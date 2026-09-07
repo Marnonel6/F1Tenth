@@ -1,0 +1,18 @@
+# ROS 2 / colcon
+**/build/
+**/install/
+**/log/
+# Python
+**/__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+# Bags and scratch
+*.db3
+*.mcap
+bags/
