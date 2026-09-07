@@ -25,15 +25,17 @@ nodes, possibly a physical car later.
 - Keep the Progress section at the bottom of this file current. I start each lab
   in a fresh session and expect you to resume from it.
 - Global rules also apply: task list for multi-step work, one commit per task.
+- Commit messages: plain, no Co-Authored-By or Claude-Session trailers, no AI
+  attribution anywhere.
 
 ## Environment (verified 2026-09-07)
 
 | Item | Value |
 |---|---|
 | Host | Ubuntu 22.04.5, ROS 2 Humble (untouched), X11 on `DISPLAY=:1` |
-| Container | `roboracer_sim`, image `roboracer_sim:jazzy`, ROS 2 **Jazzy**, Ubuntu 24.04, Python 3.12 |
+| Container | `roboracer_sim`, image `roboracer_sim:jazzy` = upstream image `roboracer_base:jazzy` + `sim/Dockerfile` (osqp, osqp-eigen, cvxpy, scipy, numba for the lab templates). ROS 2 **Jazzy**, Ubuntu 24.04, Python 3.12 |
 | Docker | 29.5, Compose v5.1, host networking, `ipc: host` |
-| GPU | RTX 3070 Laptop, passed through via CDI `nvidia.com/gpu=all` (no nvidia runtime registration needed) |
+| GPU | RTX 3070 Laptop, passed through via CDI `nvidia.com/gpu=all` (no nvidia runtime registration needed). Host X runs on the Intel iGPU; the RTX is a PRIME offload provider, so compose sets `__NV_PRIME_RENDER_OFFLOAD=1` and `__GLX_VENDOR_LIBRARY_NAME=nvidia` and also passes `/dev/dri` (Mesa/Intel fallback if those are removed). Physics is CPU JAX regardless. |
 | Display | RViz over X11 (`scripts/rviz.sh`, does `xhost +local:docker`). Foxglove in browser at ws://localhost:8765 as alternative. Port 8080 is taken on the host, so no noVNC. |
 | Simulator | `f1tenth_gym_ros` branch `dev-jazzy` (submodule, `sim/f1tenth_gym_ros`), gym `f1tenth_gym` branch `dev-jax` installed in image at `/sim_ws/f1tenth_gym`, CPU JAX |
 | Mounts | `sim/f1tenth_gym_ros` -> `/sim_ws/src/f1tenth_gym_ros`, `labs/ws` -> `/labs_ws` |
@@ -80,6 +82,11 @@ Single agent (default). Message types in parentheses.
 | `/initialpose` | you -> sim | `PoseWithCovarianceStamped` | reset ego (RViz 2D Pose Estimate) |
 | `/cmd_vel` | teleop -> sim | `geometry_msgs/Twist` | only when `kb_teleop: True` |
 | `/clock` | sim -> all | `rosgraph_msgs/Clock` | only when `use_sim_time: True` |
+| `/pause_sim` | you -> sim | `std_msgs/Bool` | pause / resume physics |
+
+Measured 2026-09-07: `/scan` and odom both stream at roughly 240 Hz in the default
+async mode (the sim steps on a timer, faster than a real 40 Hz Hokuyo/SICK). Do not
+assume real-sensor rates in lab code; read `scan.header.stamp`.
 
 Multi agent adds `/opp_scan[N]`, `/opp_drive[N]`, `/opp_racecar[N]/odom`,
 `/ego_racecar/opp_odom[N]`, `/goal_pose[N]` (reset opponent N). First opponent

@@ -1,27 +1,43 @@
 # RoboRacer simulator container (ROS 2 Jazzy, f1tenth_gym_ros dev-jazzy).
 # Everything ROS-related runs in here; the host stays on its own ROS 2 Humble.
 #
-#   docker compose -f sim/docker-compose.yml up -d --build   # first time
+#   scripts/sim_up.sh --build                                  # first time
 #   scripts/launch_sim.sh                                      # bridge + map
 #   scripts/rviz.sh                                            # RViz over X11
 #
 # Host networking is deliberate: Foxglove (ws://localhost:8765) and any host
 # tools see the container's ROS graph without port juggling.
 services:
-  sim:
-    image: roboracer_sim:jazzy
-    container_name: roboracer_sim
+  # Upstream simulator image, built from the submodule. Never runs; only a build
+  # target (profile "build"). scripts/sim_up.sh --build builds it before "sim".
+  base:
+    image: roboracer_base:jazzy
+    profiles: [build]
     build:
       context: ./f1tenth_gym_ros
       args:
         ROS_DISTRO: jazzy
         GYM_REF: dev-jax
+
+  sim:
+    image: roboracer_sim:jazzy
+    container_name: roboracer_sim
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: roboracer_base:jazzy
     network_mode: host
     ipc: host
     environment:
       - DISPLAY=${DISPLAY:-:1}
       - QT_X11_NO_MITSHM=1
       - NVIDIA_DRIVER_CAPABILITIES=all
+      # Host X runs on the Intel iGPU with the RTX as a PRIME offload provider.
+      # These two make GL apps in the container (rviz2, gym renderer) use the RTX.
+      # Drop them to fall back to Mesa on the Intel iGPU via /dev/dri.
+      - __NV_PRIME_RENDER_OFFLOAD=1
+      - __GLX_VENDOR_LIBRARY_NAME=nvidia
     volumes:
       # simulator source (edit sim.yaml on the host, rebuild in the container)
       - ./f1tenth_gym_ros:/sim_ws/src/f1tenth_gym_ros
@@ -36,5 +52,6 @@ services:
     # and add `- LIBGL_ALWAYS_SOFTWARE=1` to environment.
     devices:
       - nvidia.com/gpu=all
+      - /dev/dri:/dev/dri
     stdin_open: true
     tty: true
