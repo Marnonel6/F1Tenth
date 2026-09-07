@@ -111,8 +111,15 @@ Default map `maps/levine`, ego start `(-12, 0, 0)`.
 
 ## Progress
 
-- Lab 1 (Intro to ROS 2) — not started. Deliverables: package `lab1_pkg`
-  (ament_python), nodes `talker` (params `v`, `d` -> `/drive`) and `relay`
-  (`/drive` x3 -> `/drive_relay`), launch file `lab1_launch.py`, answers in
-  `SUBMISSION.md`. Template dir: `labs/ws/src/lab1_intro_ros2/`.
+- Lab 1 (Intro to ROS 2) — skipped 2026-09-07. Marno already knows the
+  material (talker/relay nodes, params, launch files, Docker). The package
+  build/run workflow gets exercised at the start of Lab 2 instead.
+- Lab 2 (Automatic Emergency Braking) — next, not started. Template:
+  `labs/ws/src/lab2_aeb/safety_node/` (already builds). Concept: iTTC =
+  r / max(-r_dot, 0) per beam, r_dot from v_x cos(theta_i) (odom
+  `twist.twist.linear.x`) or from consecutive scans. Node subscribes `/scan` and
+  `/ego_racecar/odom`, publishes `/drive` speed 0.0 when min iTTC < threshold;
+  must handle inf/nan and avoid false positives in the Levine hallway. Test with
+  `scripts/teleop.sh` (needs `kb_teleop: True` in sim.yaml, already the default)
+  driving at a wall. Deliverables: working package, screencast, `SUBMISSION.md`.
 - Open questions: none yet.
