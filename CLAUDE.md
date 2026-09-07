@@ -34,13 +34,13 @@ nodes, possibly a physical car later.
 |---|---|
 | Host | Ubuntu 22.04.5, ROS 2 Humble (untouched), X11 on `DISPLAY=:1` |
 | Container | `roboracer_sim`, image `roboracer_sim:jazzy` = upstream image `roboracer_base:jazzy` + `sim/Dockerfile` (osqp, osqp-eigen, cvxpy, scipy, numba for the lab templates). ROS 2 **Jazzy**, Ubuntu 24.04, Python 3.12 |
-| Docker | 29.5, Compose v5.1, host networking, `ipc: host` |
+| Docker | 29.5, Compose v5.1, host networking, `ipc: host`, `ROS_DOMAIN_ID=1` in the container |
 | GPU | RTX 3070 Laptop, passed through via CDI `nvidia.com/gpu=all` (no nvidia runtime registration needed). Host X runs on the Intel iGPU; the RTX is a PRIME offload provider, so compose sets `__NV_PRIME_RENDER_OFFLOAD=1` and `__GLX_VENDOR_LIBRARY_NAME=nvidia` and also passes `/dev/dri` (Mesa/Intel fallback if those are removed). Physics is CPU JAX regardless. |
 | Display | RViz over X11 (`scripts/rviz.sh`, does `xhost +local:docker`). Foxglove in browser at ws://localhost:8765 as alternative. Port 8080 is taken on the host, so no noVNC. |
 | Simulator | `f1tenth_gym_ros` branch `dev-jazzy` (submodule, `sim/f1tenth_gym_ros`), gym `f1tenth_gym` branch `dev-jax` installed in image at `/sim_ws/f1tenth_gym`, CPU JAX |
 | Mounts | `sim/f1tenth_gym_ros` -> `/sim_ws/src/f1tenth_gym_ros`, `labs/ws` -> `/labs_ws` |
 | Container user | root; `scripts/fix_perms.sh` reclaims files (build_lab runs it) |
-| Host <-> container ROS | Discovery works from the container to the host only via a stale daemon, not reliably: Humble's Fast DDS 2.6 cannot parse Jazzy's Fast DDS 2.14 discovery data (`sequence size exceeds remaining buffer`). So run every ROS tool (rqt, ros2 topic, rviz2) inside the container, never the host Humble ones. |
+| Host <-> container ROS | Isolated on purpose: container runs `ROS_DOMAIN_ID=1`, host Humble stays on 0. Two reasons. (1) With host networking both `ros2` CLIs use the daemon port `11511 + domain`, so on the same domain the container CLI talks to the host Humble daemon and `ros2 node list` comes back empty. (2) Humble's Fast DDS 2.6 cannot parse Jazzy's Fast DDS 2.14 discovery data (`sequence size exceeds remaining buffer`), so host tools never see the sim anyway. Run every ROS tool (rqt, ros2 topic, rviz2) inside the container. |
 
 Course distro: the lab templates and simulator target ROS 2 Jazzy as of Sept 2026.
 

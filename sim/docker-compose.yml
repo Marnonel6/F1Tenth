@@ -30,6 +30,7 @@ services:
     network_mode: host
     ipc: host
     environment:
+      - ROS_DOMAIN_ID=1
       - DISPLAY=${DISPLAY:-:1}
       - QT_X11_NO_MITSHM=1
       - NVIDIA_DRIVER_CAPABILITIES=all
