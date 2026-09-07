@@ -40,6 +40,7 @@ nodes, possibly a physical car later.
 | Simulator | `f1tenth_gym_ros` branch `dev-jazzy` (submodule, `sim/f1tenth_gym_ros`), gym `f1tenth_gym` branch `dev-jax` installed in image at `/sim_ws/f1tenth_gym`, CPU JAX |
 | Mounts | `sim/f1tenth_gym_ros` -> `/sim_ws/src/f1tenth_gym_ros`, `labs/ws` -> `/labs_ws` |
 | Container user | root; `scripts/fix_perms.sh` reclaims files (build_lab runs it) |
+| Host <-> container ROS | Discovery works from the container to the host only via a stale daemon, not reliably: Humble's Fast DDS 2.6 cannot parse Jazzy's Fast DDS 2.14 discovery data (`sequence size exceeds remaining buffer`). So run every ROS tool (rqt, ros2 topic, rviz2) inside the container, never the host Humble ones. |
 
 Course distro: the lab templates and simulator target ROS 2 Jazzy as of Sept 2026.
 
@@ -52,6 +53,7 @@ All scripts start the container if needed. Run from the repo root.
 | Build image / start container | `scripts/sim_up.sh --build` (first time), `scripts/sim_up.sh` |
 | Launch sim (foreground, Ctrl-C stops) | `scripts/launch_sim.sh [num_agents:=2] [map_path:=Spielberg] [config:=my.yaml]` |
 | RViz | `scripts/rviz.sh` |
+| rqt | `scripts/rqt.sh` (graph), `scripts/rqt.sh plot`, `scripts/rqt.sh console`, `scripts/rqt.sh gui` |
 | Keyboard teleop | `scripts/teleop.sh` (i/u/o forward, ,/m/. back, k stop) |
 | Health check | `scripts/topics.sh` |
 | Shell in container | `scripts/shell.sh` (cwd `/labs_ws`, everything sourced) |

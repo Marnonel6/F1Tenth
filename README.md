@@ -14,6 +14,7 @@ scripts/sim_up.sh --build        # builds the image (~10 min), starts the contai
 ```bash
 scripts/launch_sim.sh            # terminal 1: physics, LiDAR, odom, map, tf
 scripts/rviz.sh                  # terminal 2: RViz on the host display
+scripts/rqt.sh                   # rqt_graph in the container (host rqt cannot see the Jazzy graph)
 scripts/teleop.sh                # optional: drive with the keyboard
 scripts/topics.sh                # health check: topic list + /scan rate
 ```

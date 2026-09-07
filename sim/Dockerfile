@@ -24,6 +24,13 @@ RUN apt-get update && \
 # lab 8 mpc_node.py -> cvxpy, scipy; lab 6 rrt -> numba.
 RUN pip3 install --no-cache-dir cvxpy scipy numba
 
+# GUI tools run inside the container (rqt_graph, rqt_plot, rqt_console, ...).
+# Host Humble tools cannot introspect this graph: Humble's Fast DDS 2.6 cannot
+# parse Jazzy's Fast DDS 2.14 discovery data, so rqt has to live in here.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ros-jazzy-rqt-common-plugins && \
+    rm -rf /var/lib/apt/lists/*
+
 # Lab workspace sourced in interactive shells when it exists
 RUN echo '[ -f /labs_ws/install/setup.bash ] && source /labs_ws/install/setup.bash' >> /root/.bashrc
 
