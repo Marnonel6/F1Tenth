@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
+from rcl_interfaces.msg import SetParametersResult
 
 import numpy as np
 # TODO: include needed ROS msg type headers and libraries
@@ -26,18 +27,33 @@ class SafetyNode(Node):
 
         NOTE that the x component of the linear velocity in odom is the speed
         """
-        self.speed = 0.
-        # Braking threshold in seconds, tunable with --ros-args -p ttc_threshold:=1.5
+        # Braking threshold in seconds. Set at launch with
+        #   --ros-args -p ttc_threshold:=1.5
+        # or live with
+        #   ros2 param set /safety_node ttc_threshold 1.5
+        # The live path works because on_set_parameters below refreshes the cached value.
         self.declare_parameter('ttc_threshold', 1.0)
         self.ttc_threshold = self.get_parameter('ttc_threshold').value
+        self.add_on_set_parameters_callback(self.on_set_parameters)
         # cos(beam angle) for every beam, built on the first scan and reused
         self.cos_angles = None
+        self.speed = 0.0
         # TODO: create ROS subscribers and publishers.
         self.create_subscription(LaserScan, '/scan', self.scan_callback, 10)
         self.create_subscription(Odometry, '/ego_racecar/odom', self.odom_callback, 10)
         self.drive_pub = self.create_publisher(AckermannDriveStamped, '/drive', 10)
         # Publish a bolean message to a brake engage topic to indicate that the brake is engaged
         self.brake_engage_pub = self.create_publisher(Bool, '/brake_engage', 10)
+
+    def on_set_parameters(self, params):
+        # Called by rclpy for every parameter change request, before it is applied.
+        for p in params:
+            if p.name == 'ttc_threshold':
+                if p.value <= 0.0:
+                    return SetParametersResult(successful=False, reason='ttc_threshold must be > 0')
+                self.ttc_threshold = float(p.value)
+                self.get_logger().info(f'ttc_threshold set to {self.ttc_threshold:.2f} s')
+        return SetParametersResult(successful=True)
 
     def odom_callback(self, odom_msg):
         # TODO: update current speed
