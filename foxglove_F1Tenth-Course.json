@@ -1,0 +1,25 @@
+{
+  "configById": {
+    "Indicator!4gtkyq5": {
+      "path": "/brake_engage.data",
+      "style": "bulb",
+      "fontSize": 36,
+      "fallbackColor": "#a0a0a0",
+      "fallbackLabel": "False",
+      "rules": [
+        {
+          "operator": "=",
+          "rawValue": "true",
+          "color": "#68e24a",
+          "label": "True"
+        }
+      ]
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": "Indicator!4gtkyq5"
+}
