@@ -77,6 +77,20 @@ class SafetyNode(Node):
         ittc = np.full_like(ranges, np.inf)
         np.divide(ranges, closing_speed, out=ittc, where=closing_speed > 0)
 
+        # TODO(marno): staged braking instead of a single threshold.
+        #   iTTC < 2.0 s  -> forward collision warning only (no speed change)
+        #   iTTC < 1.0 s  -> partial brake 1: command 75 % of the driver's speed
+        #   iTTC < 0.5 s  -> partial brake 2: command 50 % of the driver's speed
+        #   iTTC < 0.1 s  -> emergency stop: command 0 m/s
+        #   Make all four thresholds parameters (e.g. ttc_warn, ttc_partial_1,
+        #   ttc_partial_2, ttc_stop) and validate warn > partial_1 > partial_2 > stop.
+        #   Publish the active stage on a new topic, e.g. /brake_stage
+        #   (std_msgs/Int8: 0 none, 1 warning, 2 partial 1, 3 partial 2, 4 stop);
+        #   keep /brake_engage as "stage >= 2".
+        #   Design note: "75 % of commanded speed" needs the driver's command, which
+        #   this node does not see today (teleop goes /cmd_vel -> bridge). Either sit
+        #   between the driver and /drive (subscribe to a command topic, republish a
+        #   scaled copy on /drive) or scale the current odom speed as a stand-in.
         # 5. brake decision
         brake = bool(np.min(ittc) < self.ttc_threshold)
         self.brake_engage_pub.publish(Bool(data=brake))

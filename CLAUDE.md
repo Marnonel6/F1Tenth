@@ -122,4 +122,7 @@ Default map `maps/levine`, ego start `(-12, 0, 0)`.
   must handle inf/nan and avoid false positives in the Levine hallway. Test with
   `scripts/teleop.sh` (needs `kb_teleop: True` in sim.yaml, already the default)
   driving at a wall. Deliverables: working package, screencast, `SUBMISSION.md`.
+- Lab 2 follow-up TODO (in `safety_node.py` above the brake decision): staged
+  braking with four thresholds (warning 2 s, 75 % speed at 1 s, 50 % at 0.5 s,
+  stop at 0.1 s) and a `/brake_stage` topic reporting the active stage.
 - Open questions: none yet.
