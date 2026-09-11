@@ -2,8 +2,14 @@
 # Everything ROS-related runs in here; the host stays on its own ROS 2 Humble.
 #
 #   scripts/sim_up.sh --build                                  # first time
+#   scripts/sim_up.sh [--cpu|--gpu]                            # default: auto
 #   scripts/launch_sim.sh                                      # bridge + map
 #   scripts/rviz.sh                                            # RViz over X11
+#
+# This file alone is the CPU configuration: rendering through Mesa on the Intel
+# iGPU via /dev/dri, physics on CPU JAX. docker-compose.gpu.yml is an override
+# that adds the RTX (CDI device + PRIME offload env vars); scripts/_common.sh
+# stacks it on top when the host NVIDIA stack is healthy or SIM_MODE=gpu.
 #
 # Host networking is deliberate: Foxglove (ws://localhost:8765) and any host
 # tools see the container's ROS graph without port juggling.
@@ -33,12 +39,6 @@ services:
       - ROS_DOMAIN_ID=1
       - DISPLAY=${DISPLAY:-:1}
       - QT_X11_NO_MITSHM=1
-      - NVIDIA_DRIVER_CAPABILITIES=all
-      # Host X runs on the Intel iGPU with the RTX as a PRIME offload provider.
-      # These two make GL apps in the container (rviz2, gym renderer) use the RTX.
-      # Drop them to fall back to Mesa on the Intel iGPU via /dev/dri.
-      - __NV_PRIME_RENDER_OFFLOAD=1
-      - __GLX_VENDOR_LIBRARY_NAME=nvidia
     volumes:
       # simulator source (edit sim.yaml on the host, rebuild in the container)
       - ./f1tenth_gym_ros:/sim_ws/src/f1tenth_gym_ros
@@ -46,13 +46,8 @@ services:
       - ../labs/ws:/labs_ws
       # X11 socket so rviz2 can open a window on the host display
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-    # GPU via CDI (Container Device Interface). No nvidia runtime registration
-    # needed: `docker info` already lists nvidia.com/gpu=all. Gives RViz hardware
-    # GL and lets you `pip install -e /sim_ws/f1tenth_gym[cuda]` for GPU JAX later.
-    # If the container ever fails to start with a CDI error, comment out `devices:`
-    # and add `- LIBGL_ALWAYS_SOFTWARE=1` to environment.
+    # Intel iGPU for Mesa GL (rviz2). The RTX is added by docker-compose.gpu.yml.
     devices:
-      - nvidia.com/gpu=all
       - /dev/dri:/dev/dri
     stdin_open: true
     tty: true

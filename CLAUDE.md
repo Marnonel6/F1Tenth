@@ -35,7 +35,7 @@ nodes, possibly a physical car later.
 | Host | Ubuntu 22.04.5, ROS 2 Humble (untouched), X11 on `DISPLAY=:1` |
 | Container | `roboracer_sim`, image `roboracer_sim:jazzy` = upstream image `roboracer_base:jazzy` + `sim/Dockerfile` (osqp, osqp-eigen, cvxpy, scipy, numba for the lab templates). ROS 2 **Jazzy**, Ubuntu 24.04, Python 3.12 |
 | Docker | 29.5, Compose v5.1, host networking, `ipc: host`, `ROS_DOMAIN_ID=1` in the container |
-| GPU | RTX 3070 Laptop, passed through via CDI `nvidia.com/gpu=all` (no nvidia runtime registration needed). Host X runs on the Intel iGPU; the RTX is a PRIME offload provider, so compose sets `__NV_PRIME_RENDER_OFFLOAD=1` and `__GLX_VENDOR_LIBRARY_NAME=nvidia` and also passes `/dev/dri` (Mesa/Intel fallback if those are removed). Physics is CPU JAX regardless. |
+| GPU | Two container flavours, picked by `scripts/sim_up.sh --gpu|--cpu` or `SIM_MODE`; default auto. CPU: `sim/docker-compose.yml` alone, Mesa on the Intel iGPU via `/dev/dri`. GPU: adds `sim/docker-compose.gpu.yml`, which passes the RTX 3070 Laptop via CDI `nvidia.com/gpu=all` (no nvidia runtime registration needed) and sets `__NV_PRIME_RENDER_OFFLOAD=1` / `__GLX_VENDOR_LIBRARY_NAME=nvidia` because host X runs on the Intel iGPU with the RTX as PRIME offload provider. Auto picks gpu only if `nvidia-smi` works and `/run/nvidia-persistenced/socket` exists; after an unattended NVIDIA driver upgrade (happened 2026-09-11) both fail until reboot and the CDI mount errors, so auto falls back to cpu. Physics is CPU JAX regardless. |
 | Display | RViz over X11 (`scripts/rviz.sh`, does `xhost +local:docker`). Foxglove in browser at ws://localhost:8765 as alternative. Port 8080 is taken on the host, so no noVNC. |
 | Simulator | `f1tenth_gym_ros` branch `dev-jazzy` (submodule, `sim/f1tenth_gym_ros`), gym `f1tenth_gym` branch `dev-jax` installed in image at `/sim_ws/f1tenth_gym`, CPU JAX |
 | Mounts | `sim/f1tenth_gym_ros` -> `/sim_ws/src/f1tenth_gym_ros`, `labs/ws` -> `/labs_ws` |
@@ -50,7 +50,7 @@ All scripts start the container if needed. Run from the repo root.
 
 | Task | Command |
 |---|---|
-| Build image / start container | `scripts/sim_up.sh --build` (first time), `scripts/sim_up.sh` |
+| Build image / start container | `scripts/sim_up.sh --build` (first time), `scripts/sim_up.sh [--cpu\|--gpu]` (default auto; switching mode recreates the container) |
 | Launch sim (foreground, Ctrl-C stops) | `scripts/launch_sim.sh [num_agents:=2] [map_path:=Spielberg] [config:=my.yaml]` |
 | RViz | `scripts/rviz.sh` |
 | rqt | `scripts/rqt.sh` (graph), `scripts/rqt.sh plot`, `scripts/rqt.sh console`, `scripts/rqt.sh gui` |

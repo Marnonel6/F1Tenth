@@ -8,6 +8,7 @@ stays on its own ROS 2 Humble.
 ```bash
 git submodule update --init
 scripts/sim_up.sh --build        # builds the image (~10 min), starts the container
+scripts/sim_up.sh --cpu          # or --gpu; default auto-detects a healthy NVIDIA stack
 ```
 
 ## Every session
